@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-native-34-svc
+  namespace: nju34
+spec:
+  type: Nodeport
+  selector:
+    app: cloud-native-34
+    ports:
+      - nodePort: 3434
+        port: 8888
+        targetPort: 8080

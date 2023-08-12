@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: project-group34
+  namespace: nju34
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloud-native-34
+    template:
+      metadata:
+        labels:
+          app: cloud-native-34
+      spec:
+        containers:
+          - name: group34-containers
+            image: 34_images
+            imagePullPolicy: Never
