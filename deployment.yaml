@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: group34-containers
-          image: 34_images
-          imagePullPolicy: Never
+          image: harbor.edu.cn/nju34/34_images:VERSION
+          imagePullPolicy: Always
           resources:
             requests:
               memory: 50Mi
