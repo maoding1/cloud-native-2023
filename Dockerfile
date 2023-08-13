@@ -5,7 +5,7 @@ FROM openjdk:18
 WORKDIR /app
 
 # 将编译后的Spring Boot JAR文件复制到容器中
-COPY hello-0.0.1-SNAPSHOT.jar app.jar
+COPY ./target/hello-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 # 设置启动命令

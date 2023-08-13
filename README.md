@@ -28,3 +28,27 @@
 
 ![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v28e97142d0ae3454abb2d825cdedd60af.png)
 
+### bonus：对实例进行统一限流
+
+使用tomcat完成相关功能
+
+下载与安装：
+
+```bash
+wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.52/bin/apache-tomcat-9.0.52.tar.gz
+tar -xzf apache-tomcat-9.0.52.tar.gz
+```
+
+在tomcat安装目录下的conf/server.xml中进行如下配置：
+
+```xml
+<Connector port="8080" protocol="HTTP/1.1"
+           connectionTimeout="5000" maxThreads="100"
+           redirectPort="8080" />
+```
+
+- `port`: 指定连接器监听的端口号，这里设置为8080，表示springboot应用启动的短裤。
+- `protocol`: 指定连接器使用的协议，这里使用的是HTTP/1.1。
+- `connectionTimeout`: 定义连接的超时时间，即如果连接在指定的时间内没有活动，则会被关闭。这里设置为5000毫秒（5秒）。
+- `maxThreads`: 定义了最大线程数，即Tomcat容器可以同时处理的最大请求数量。当并发请求数超过此限制时，新的请求将排队等待处理。这里设置为100，表示最大线程数为100。
+- `redirectPort`: 指定重定向端口，当连接器接收到安全请求（例如HTTPS）时，它会将请求重定向到指定的端口。这里设置为8080，表示不进行重定向。
