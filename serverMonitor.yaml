@@ -13,6 +13,6 @@ spec:
     matchLabels:
       app: cloud-native-34
   endpoints:
-    - port: 8080
+    - port: http
       interval: 15s
       path: /actuator/prometheus

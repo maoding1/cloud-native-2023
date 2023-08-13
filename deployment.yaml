@@ -16,8 +16,9 @@ spec:
       containers:
         - name: group34-containers
           image: harbor.edu.cn/nju34/34_images:VERSION
-          imagePullPolicy: Always
           resources:
             requests:
               memory: 50Mi
               cpu: 50m
+      imagePullSecrets:
+        - name: nju34
