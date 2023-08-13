@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: project-group34
@@ -8,12 +8,16 @@ spec:
   selector:
     matchLabels:
       app: cloud-native-34
-    template:
-      metadata:
-        labels:
-          app: cloud-native-34
-      spec:
-        containers:
-          - name: group34-containers
-            image: 34_images
-            imagePullPolicy: Never
+  template:
+    metadata:
+      labels:
+        app: cloud-native-34
+    spec:
+      containers:
+        - name: group34-containers
+          image: 34_images
+          imagePullPolicy: Never
+          resources:
+            requests:
+              memory: 50Mi
+              cpu: 50m
