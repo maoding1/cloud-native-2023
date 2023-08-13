@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: project-group34-monitor
+  labels:
+    app: cloud-native-34
+spec:
+  selector:
+    matchLabels:
+      app: cloud-native-34
+  endpoints:
+    - port: 8080
+      interval: 15s
+      path: /actuator/prometheus
