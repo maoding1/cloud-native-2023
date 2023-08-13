@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: cloud-native-34-svc
   namespace: nju34
+  labels:
+    app : cloud-native-34
 spec:
   type: NodePort
   selector:
