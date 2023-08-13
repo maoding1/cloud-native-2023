@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 public class HelloController {
     /* 为了方便测试，限流策略设为1秒钟2个令牌,正式提交时应改为每秒100个令牌**/
-    private final RateLimiter limiter = RateLimiter.create(2.0);
+    public RateLimiter limiter = RateLimiter.create(2.0);
     @RequestMapping("/hello")
     public String hello() {
         JSONObject jsonObject = new JSONObject();
@@ -25,5 +25,9 @@ public class HelloController {
         }
 
         return jsonObject.toJSONString();
+    }
+
+    public void SetRateLimiter(RateLimiter rateLimiter) {
+        this.limiter = rateLimiter;
     }
 }
