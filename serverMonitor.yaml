@@ -13,7 +13,6 @@ spec:
     matchLabels:
       app: cloud-native-34
   endpoints:
-    - port: http
+    - port: metrics
       interval: 15s
       path: /actuator/prometheus
-      scheme: 'http'
