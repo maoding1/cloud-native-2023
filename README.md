@@ -124,6 +124,10 @@ maven中加入如下依赖：
 			<artifactId>simpleclient_spring_boot</artifactId>
 			<version>0.11.0</version>
 		</dependency>
+<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
 ```
 
 在项目配置中加入如下配置，暴露指标：
@@ -341,9 +345,21 @@ jenkins部署成功截图：
 
 ![image.png](https://pic2.58cdn.com.cn/nowater/webim/big/n_v2a01bac30113e43a9977ea0cb6d711736.png)
 
-使用kubectl查看部署情况：
+使用kubectl查看部署情况并使用curl命令测试：
 
-![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v293a59a59a3d64f0290bba6628f7eda69.png)
+![image.png](https://pic7.58cdn.com.cn/nowater/webim/big/n_v27ac6eb63e14d460cbd085e901cc84b6e.png)
+
+
 
 ## 扩容场景
+
+### prometheus查看监控指标
+
+创建servicemonitor对象后通过服务发现机制就能自动开始监控服务信息了：
+
+![image.png](https://pic5.58cdn.com.cn/nowater/webim/big/n_v248782691a33e41ca899fa00da688ce30.png)
+
+### Grafana 监控大屏
+
+![image.png](https://pic8.58cdn.com.cn/nowater/webim/big/n_v2aa1dc9308af0479aaab97fe04c80ac50.png)
 

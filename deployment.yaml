@@ -4,7 +4,7 @@ metadata:
   name: project-group34
   namespace: nju34
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: cloud-native-34
