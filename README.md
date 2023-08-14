@@ -30,6 +30,115 @@
 
 ![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v28e97142d0ae3454abb2d825cdedd60af.png)
 
+### 构建时单元测试
+
+在/test目录下加入测试类HelloControllerTest:
+
+```java
+package com.example.hello;
+
+import com.google.common.util.concurrent.RateLimiter;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+@SpringBootTest
+public class HelloControllerTests {
+
+    @Mock
+    private RateLimiter rateLimiter;
+
+    @InjectMocks
+    private HelloController helloController;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void testHelloWithTokenAcquired() throws JSONException {
+        // Mock the rateLimiter.tryAcquire() method to return true
+        when(rateLimiter.tryAcquire(500, TimeUnit.MILLISECONDS)).thenReturn(true);
+
+        // Call the hello() method
+        helloController.SetRateLimiter(rateLimiter);
+        String response = helloController.hello();
+
+        // Verify the response
+        JSONObject jsonObject = new JSONObject(response);
+        assertEquals(200, jsonObject.getInt("code"));
+        assertEquals("hello cloud_native!", jsonObject.getString("msg"));
+    }
+
+    @Test
+    public void testHelloWithTokenNotAcquired() throws JSONException {
+        // Mock the rateLimiter.tryAcquire() method to return false
+        when(rateLimiter.tryAcquire(500, TimeUnit.MILLISECONDS)).thenReturn(false);
+
+        // Call the hello() method
+        helloController.SetRateLimiter(rateLimiter);
+        String response = helloController.hello();
+
+        // Verify the response
+        JSONObject jsonObject = new JSONObject(response);
+        assertEquals(429, jsonObject.getInt("code"));
+        assertEquals("too many requests", jsonObject.getString("msg"));
+    }
+}
+```
+
+在pipeline打包时使用 mvn clean test package插入执行单元测试步骤
+
+本地执行测试结果如下：
+
+![image.png](https://pic3.58cdn.com.cn/nowater/webim/big/n_v2f756603c9ffa4f528abd110ca70b6d20.png)
+
+### 实现接口访问指标，并暴露给Prometheus
+
+maven中加入如下依赖：
+
+```xml
+<!-- Spring Boot Actuator -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- Prometheus Java Client -->
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient_spring_boot</artifactId>
+			<version>0.11.0</version>
+		</dependency>
+```
+
+在项目配置中加入如下配置，暴露指标：
+
+```properties
+# 启用Actuator的所有端点
+management.endpoints.web.exposure.include=*
+
+# 配置Prometheus指标端点
+management.endpoint.metrics.enabled=true
+management.endpoint.metrics.path=/actuator/prometheus
+```
+
+
+
 ### bonus：对实例进行统一限流
 
 使用tomcat完成相关功能
@@ -79,7 +188,7 @@ CMD ["java", "-jar", "app.jar"]
 ###  k8s deployment.yaml
 
 ```yaml
-apiVersion: v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: project-group34
@@ -88,16 +197,22 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: cloud-native-34 #表示selector管理的容器标签
-    template:
-      metadata:
-        labels:
-          app: cloud-native-34 #项目标签
-      spec:
-        containers:
-          - name: group34-containers
-            image: 34_images #镜像名称，与jenkins的构建阶段镜像名称匹配
-            imagePullPolicy: Never #表示只从本地已有镜像中选择
+      app: cloud-native-34
+  template:
+    metadata:
+      labels:
+        app: cloud-native-34
+    spec:
+      containers:
+        - name: group34-containers
+          image: harbor.edu.cn/nju34/34_images:VERSION
+          resources:
+            requests:
+              memory: 50Mi
+              cpu: 50m
+      #需要提前创建secret资源对象，用于从私有仓库拉取镜像，否则容器会创建失败
+      imagePullSecrets:
+        - name: nju34
 
 ```
 
@@ -117,7 +232,33 @@ spec:
       - nodePort: 30034 # 外部访问端口
         port: 8888 #集群内部端口
         targetPort: 8080 #所有流量最终路由到的端口
+
 ```
+
+### servermonitor.yaml
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: project-group34-monitor
+  namespace: nju34
+  labels:
+    app: cloud-native-34
+spec:
+  namespaceSelector:
+    matchNames:
+      - nju34
+  selector:
+    matchLabels:
+      app: cloud-native-34
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /actuator/prometheus
+```
+
+
 
 ### jenkins pipeline
 

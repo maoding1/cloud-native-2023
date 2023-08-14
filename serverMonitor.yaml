@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: project-group34-monitor
-  namespace: nju34
+  namespace: monitoring
   labels:
     app: cloud-native-34
 spec:
@@ -16,3 +16,4 @@ spec:
     - port: http
       interval: 15s
       path: /actuator/prometheus
+      scheme: 'http'
