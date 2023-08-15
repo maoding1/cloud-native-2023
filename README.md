@@ -2,31 +2,39 @@
 
 项目地址： https://github.com/maoding1/cloud-native-2023
 
+成员及分工：
+
+| 姓名   | 学号      | 分工                                                         |
+| ------ | --------- | ------------------------------------------------------------ |
+| 毛丁   | 211098325 | springboot基础功能+限流+暴露prometheus接口 ，jenkins pipeline编写,jmeter压测,prometheus+grafana监控+文档编写 |
+| 刘克典 | 211230043 | springboot基础功能+限流，测试prometheus接口 ，jenkins pipeline构建测试，服务接口测试，文档编写 |
+| 林奥   | 211180234 | springboot基础功能+限流，测试prometheus接口，jenkins pipeline编写，文档编写 |
+
 ## springboot基础功能实现
 
 ### 1. 导入依赖
 
 除了springboot项目的一些maven依赖外，关于json对象和限流需要导入以下依赖：
 
-![picture](https://pic4.58cdn.com.cn/nowater/webim/big/n_v25271e705c0634cd1bd725bbf7c677f24.png)
+![image.png](https://pic6.58cdn.com.cn/nowater/webim/big/n_v259c86d27b6614cc79a7c35b335c4aa0e.png)
 
 其中json对象使用了alibaba的fastjson库，而限流使用的是Google开源工具包Guava。
 
 ### 2.构建项目 实现接口和初步限流
 
-![picture](https://pic2.58cdn.com.cn/nowater/webim/big/n_v2841540e6ed884371aafd18ffe56ae3ec.png)
+![image.png](https://pic6.58cdn.com.cn/nowater/webim/big/n_v27f5e509adbb945a5b00223723142110d.png)
 
 ### 3.  对基本功能和限流功能的测试
 
 使用jmeter工具对接口进行测试，测试的url为localhost:8080/hello
 
-![picture](https://pic5.58cdn.com.cn/nowater/webim/big/n_v27312a66fcf514461a1447d7e113c8bd5.png)
+![image.png](https://pic4.58cdn.com.cn/nowater/webim/big/n_v2c9f12b0ecf0b4e4b95f8c1315c4d06f1.png)
 
 线程组设置：启动20个线程在一秒内循环一次，即一秒内对url发送20次请求
 
 结果如下：有正常被接受的请求，也有因为限流策略被拒绝的请求
 
-![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v2af8c6400b14c4d9197637fd31739c55d.png)
+![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v203184fc7620846aea696eefa74e245fb.png)
 
 ![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v28e97142d0ae3454abb2d825cdedd60af.png)
 
@@ -157,16 +165,47 @@ tar -xzf apache-tomcat-9.0.52.tar.gz
 在tomcat安装目录下的conf/server.xml中进行如下配置：
 
 ```xml
-<Connector port="8080" protocol="HTTP/1.1"
+<Connector port="30034" protocol="HTTP/1.1"
            connectionTimeout="5000" maxThreads="100"
-           redirectPort="8080" />
+           redirectPort="30034" />
 ```
 
-- `port`: 指定连接器监听的端口号，这里设置为8080，表示springboot应用启动的端口。
+- `port`: 指定连接器监听的端口号，这里设置为30034，表示后文中springboot应用启动时集群暴露给外界的端口。
 - `protocol`: 指定连接器使用的协议，这里使用的是HTTP/1.1。
 - `connectionTimeout`: 定义连接的超时时间，即如果连接在指定的时间内没有活动，则会被关闭。这里设置为5000毫秒（5秒）。
 - `maxThreads`: 定义了最大线程数，即Tomcat容器可以同时处理的最大请求数量。当并发请求数超过此限制时，新的请求将排队等待处理。这里设置为100，表示最大线程数为100。
-- `redirectPort`: 指定重定向端口，当连接器接收到安全请求（例如HTTPS）时，它会将请求重定向到指定的端口。这里设置为8080，表示不进行重定向。
+- `redirectPort`: 指定重定向端口，当连接器接收到安全请求（例如HTTPS）时，它会将请求重定向到指定的端口。这里设置为30034，表示不进行重定向。
+
+或者使用k8s中的VirtualService对象对service进行统一限流：
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nju-34-virtualService
+spec:
+  hosts:
+  - cloud-native-34-svc
+  http:
+  - route:
+    - destination:
+        host: cloud-native-34-svc
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+      tcp:
+        maxConnections: 1
+    httpReqTimeout: 3s
+    maxConnections: 1
+    maxRequestsPerConn: 1
+    outlierDetection:
+      consecutiveErrors: 1
+      interval: 1s
+      baseEjectionTime: 3m
+      maxEjectionPercent: 100
+
+```
 
 ## DevOps功能实现
 
@@ -343,11 +382,11 @@ node('slave'){
 
 jenkins部署成功截图：
 
-![image.png](https://pic2.58cdn.com.cn/nowater/webim/big/n_v2a01bac30113e43a9977ea0cb6d711736.png)
+![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v2803905eb3009491cb9a182c81567e70b.png)
 
 使用kubectl查看部署情况并使用curl命令测试：
 
-![image.png](https://pic7.58cdn.com.cn/nowater/webim/big/n_v27ac6eb63e14d460cbd085e901cc84b6e.png)
+![image.png](https://pic7.58cdn.com.cn/nowater/webim/big/n_v2f54a634d1c1f447fb02ba574d9726cd7.png)
 
 
 
@@ -362,4 +401,32 @@ jenkins部署成功截图：
 ### Grafana 监控大屏
 
 ![image.png](https://pic8.58cdn.com.cn/nowater/webim/big/n_v2aa1dc9308af0479aaab97fe04c80ac50.png)
+
+使用jmeter对服务的/hello启动一秒内100次的请求：
+
+![image.png](https://pic8.58cdn.com.cn/nowater/webim/big/n_v247c9e87a89244aa5a98e67c039c2178f.png)
+
+![image.png](https://pic1.58cdn.com.cn/nowater/webim/big/n_v2511b986a9f16411b9d2d5de5de50a834.png)
+
+可以看到这里曲线上升了一段(与上图相比少了两条斜线，因为那两条斜线是prometheus使用http协议定期对/atuator/prometheus端口请求数据，这里取消了对这个路径http服务的监控)
+
+### 使用k8s命令手工扩容，并再次观察Grafana的监控数据
+
+使用命令`kubectl scale deployment project-group34 --replicas=3` 将pod的数量从2扩容到3，
+
+但是由于当前用户没有权限：Error from server (Forbidden): deployments.apps "project-group34" is forbidden: User "nju34" cannot patch resource "deployments/scale" in API group "apps" in the namespace "nju34"
+
+所以在jenkins中将deployment中定义的pod数量从2改到3后重新apply。
+
+这里由于集群资源紧张，用时1天后pod仍然处于containner creating阶段，遂未成功。
+
+![image.png](https://pic3.58cdn.com.cn/nowater/webim/big/n_v2fee73b70e9c549d9b66b73089095109d.png)
+
+### bonus： Auto Scale
+
+ 可以通过 kubectl create 命令创建一个 HPA 对象， 
+
+此外，也可以使用简便的命令 kubectl autoscale 来创建 HPA 对象。 例如，在此项目中使用 kubectl autoscale deployment project-group34 --min=2 --max=5 --cpu-percent=50 将会为名为 project-group34 的 deployment对象创建一个 HPA 对象， 目标 CPU 使用率为 50%，副本数量配置为 2 到 5 之间。不过由于权限的原因 未能成功创建hpa对象。
+
+
 
